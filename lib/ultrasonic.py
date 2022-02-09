@@ -25,12 +25,12 @@ class Ultrasonic():
             if pulse_end - timeout_start > self.timeout:
                 return -1
         during = pulse_end - pulse_start
-        cm = round(during * 340 / 2 * 100, 2)
+        cm = round(during * 343 / 2 * 100, 2)
         return cm
 
     def read(self, times=10):
         for i in range(times):
             a = self._read()
-            if a != -1 or a <= 300:
+            if a != -1 and a <= 300:
                 return a
         return -1

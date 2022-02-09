@@ -15,14 +15,10 @@ class fileDB(object):
 
     A file based database, read and write arguements in the specific file.
     """
-	def __init__(self, db=None):
+	def __init__(self, db):
 		'''Init the db_file is a file to save the datas.'''
 
-		# Check if db_file is defined
-		if db != None:
-			self.db = db
-		else:
-			self.db = "config"
+		self.db = db
 
 	def get(self, name, default_value=None):
 		"""Get value by data's name. Default value is for the arguemants do not exist"""
