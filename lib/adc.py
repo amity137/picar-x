@@ -36,7 +36,7 @@ class ADC(I2C):
         return value
 
     def read_voltage(self):                             # 将读取的数据转化为电压值（0~3.3V）
-        return self.read*3.3/4095
+        return self.read() * 3.3 / 4095
         
 
 def test():
