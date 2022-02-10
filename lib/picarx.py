@@ -65,6 +65,7 @@ class Picarx(object):
             self.motor_direction_pins[motor].low()
         self.motor_speed_pins[motor].pulse_width_percent(speed)
 
+    # This is broken.
     def motor_speed_calibration(self,value):
         # global cali_speed_value,cali_dir_value
         self.cali_speed_value = value
@@ -75,13 +76,10 @@ class Picarx(object):
             self.cali_speed_value[0] = abs(self.cali_speed_value)
             self.cali_speed_value[1] = 0
 
-    def motor_direction_calibration(self,motor, value):
-        # 0: positive direction
-        # 1:negative direction
-        # global cali_dir_value
+    # Reverses the direction
+    def motor_direction_calibration(self, motor):
         motor -= 1
-        if value == 1:
-            self.cali_dir_value[motor] = -1 * self.cali_dir_value[motor]
+        self.cali_dir_value[motor] = -self.cali_dir_value[motor]
         self.config_file.set("picarx_dir_motor", self.cali_dir_value)
 
 
@@ -96,9 +94,7 @@ class Picarx(object):
         # global dir_cal_value
         self.dir_current_angle = value
         angle_value  = value + self.dir_cal_value
-        print("angle_value:",angle_value)
-        # print("set_dir_servo_angle_1:",angle_value)
-        # print("set_dir_servo_angle_2:",dir_cal_value)
+        print("angle_value:", value)
         self.dir_servo_pin.angle(angle_value)
 
     def camera_servo1_angle_calibration(self,value):
@@ -180,33 +176,7 @@ class Picarx(object):
         self.set_motor_speed(1, 0)
         self.set_motor_speed(2, 0)
 
-
-    def Get_distance(self):
-        timeout=0.01
-        trig = Pin('D8')
-        echo = Pin('D9')
-
-        trig.low()
-        time.sleep(0.01)
-        trig.high()
-        time.sleep(0.000015)
-        trig.low()
-        pulse_end = 0
-        pulse_start = 0
-        timeout_start = time.time()
-        while echo.value()==0:
-            pulse_start = time.time()
-            if pulse_start - timeout_start > timeout:
-                return -1
-        while echo.value()==1:
-            pulse_end = time.time()
-            if pulse_end - timeout_start > timeout:
-                return -2
-        during = pulse_end - pulse_start
-        cm = round(during * 340 / 2 * 100, 2)
-        #print(cm)
-        return cm
-
+    
 
 if __name__ == "__main__":
     px = Picarx()

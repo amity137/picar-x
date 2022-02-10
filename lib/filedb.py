@@ -1,20 +1,12 @@
-'''
-**********************************************************************
-* Filename    : filedb.py
-* Description : A simple file based database.
-* Author      : Cavon
-* Brand       : SunFounder
-* E-mail      : service@sunfounder.com
-* Website     : www.sunfounder.com
-* Update      : Cavon    2016-09-13    New release
-**********************************************************************
-'''
 
 class fileDB(object):
 	"""A file based database.
 
     A file based database, read and write arguements in the specific file.
     """
+
+	# TODO: optimize this class.
+
 	def __init__(self, db):
 		'''Init the db_file is a file to save the datas.'''
 
