@@ -59,8 +59,8 @@ class Picarx(object):
         direction = (1 if speed >= 0 else -1) * self.cali_dir_value[motor]
         speed = abs(speed)
         if speed != 0:
-            # TODO: test this out.
-            speed = int(speed /2 ) + 50
+            # TODO: should have max speed?
+            speed = int(speed / 2) + 40
         speed = speed - self.cali_speed_value[motor]
         if direction < 0:
             self.motor_direction_pins[motor].high()
@@ -93,7 +93,12 @@ class Picarx(object):
         self.dir_servo_pin.angle(value)
 
     def set_dir_servo_angle(self, value):
-        # global dir_cal_value
+        if value == self.dir_current_angle:
+            return
+
+        abs_value = min(abs(value), 32)
+        value = abs_value * (1 if value >= 0 else -1)
+        
         self.dir_current_angle = value
         angle_value  = value + self.dir_cal_value
         print("angle_value:", value)
@@ -142,13 +147,13 @@ class Picarx(object):
         abs_current_angle_cap = min(abs(current_angle), 40)
         power_scale = (100 - abs_current_angle_cap) / 100.0
         print('power_scale:', power_scale)
-        # TODO: test power distribution. also when angle changes
+        # TODO: try this? - https://www.researchgate.net/publication/316133453_Wheel_Speed_Control_Algorithm_for_Rear_Wheel_Motor_Driven_Vehicle
         if current_angle >= 0:
-            motor0_scale = 1
-            motor1_scale = power_scale
-        else:
             motor0_scale = power_scale
             motor1_scale = 1
+        else:
+            motor0_scale = 1
+            motor1_scale = power_scale
 
         self.set_motor_speed(0, speed * motor0_scale)
         self.set_motor_speed(1, -speed * motor1_scale)
