@@ -3,7 +3,7 @@ from servo import Servo
 from pwm import PWM
 from pin import Pin
 from adc import ADC
-from filedb import fileDB
+from configfile import ConfigFile
 import time
 
 
@@ -18,7 +18,7 @@ class Picarx(object):
         self.camera_servo_pin1 = Servo(PWM('P0'))
         self.camera_servo_pin2 = Servo(PWM('P1'))
 
-        self.config_file = fileDB('/home/pi/picar-x.config')
+        self.config_file = ConfigFile('/home/pi/picar-x.config')
 
         self.dir_cal_value = int(self.config_file.get("picarx_dir_servo", default_value=0))
         self.dir_servo_pin.angle(self.dir_cal_value)
@@ -43,7 +43,10 @@ class Picarx(object):
         self.cali_dir_value = self.config_file.get("picarx_dir_motor", default_value="[1,1]")
         self.cali_dir_value = [int(i.strip()) for i in self.cali_dir_value.strip("[]").split(",")]
         self.cali_speed_value = [0, 0]
+
         self.dir_current_angle = 0
+        self.current_speed = 0
+        
         #初始化PWM引脚
         for pin in self.motor_speed_pins:
             pin.period(self.PERIOD)
@@ -51,12 +54,12 @@ class Picarx(object):
 
 
 
-    def set_motor_speed(self,motor,speed):
+    def set_motor_speed(self, motor, speed):
         # global cali_speed_value,cali_dir_value
-        motor -= 1
         direction = (1 if speed >= 0 else -1) * self.cali_dir_value[motor]
         speed = abs(speed)
         if speed != 0:
+            # TODO: test this out.
             speed = int(speed /2 ) + 50
         speed = speed - self.cali_speed_value[motor]
         if direction < 0:
@@ -65,8 +68,8 @@ class Picarx(object):
             self.motor_direction_pins[motor].low()
         self.motor_speed_pins[motor].pulse_width_percent(speed)
 
-    # This is broken.
-    def motor_speed_calibration(self,value):
+    # TODO: this is broken.
+    def motor_speed_calibration(self, value):
         # global cali_speed_value,cali_dir_value
         self.cali_speed_value = value
         if value < 0:
@@ -78,47 +81,51 @@ class Picarx(object):
 
     # Reverses the direction
     def motor_direction_calibration(self, motor):
-        motor -= 1
         self.cali_dir_value[motor] = -self.cali_dir_value[motor]
         self.config_file.set("picarx_dir_motor", self.cali_dir_value)
 
 
-    def dir_servo_angle_calibration(self,value):
+    def dir_servo_angle_calibration(self, value):
         # global dir_cal_value
         self.dir_cal_value = value
         print("calibrationdir_cal_value:",self.dir_cal_value)
         self.config_file.set("picarx_dir_servo", "%s"%value)
         self.dir_servo_pin.angle(value)
 
-    def set_dir_servo_angle(self,value):
+    def set_dir_servo_angle(self, value):
         # global dir_cal_value
         self.dir_current_angle = value
         angle_value  = value + self.dir_cal_value
         print("angle_value:", value)
         self.dir_servo_pin.angle(angle_value)
 
-    def camera_servo1_angle_calibration(self,value):
+        # Have the correct power scale
+        self.forward(self.current_speed)
+
+    def camera_servo1_angle_calibration(self, value):
         # global cam_cal_value_1
         self.cam_cal_value_1 = value
         self.config_file.set("picarx_cam1_servo", "%s"%value)
         print("cam_cal_value_1:",self.cam_cal_value_1)
         self.camera_servo_pin1.angle(value)
 
-    def camera_servo2_angle_calibration(self,value):
+    def camera_servo2_angle_calibration(self, value):
         # global cam_cal_value_2
         self.cam_cal_value_2 = value
         self.config_file.set("picarx_cam2_servo", "%s"%value)
         print("picarx_cam2_servo:",self.cam_cal_value_2)
         self.camera_servo_pin2.angle(value)
 
-    def set_camera_servo1_angle(self,value):
+    def set_camera_servo1_angle(self, value):
         # global cam_cal_value_1
+        # TODO: understand this.
         self.camera_servo_pin1.angle(-1*(value + -1*self.cam_cal_value_1))
         # print("self.cam_cal_value_1:",self.cam_cal_value_1)
         print((value + self.cam_cal_value_1))
 
-    def set_camera_servo2_angle(self,value):
+    def set_camera_servo2_angle(self, value):
         # global cam_cal_value_2
+        # TODO: understand this.
         self.camera_servo_pin2.angle(-1*(value + -1*self.cam_cal_value_2))
         # print("self.cam_cal_value_2:",self.cam_cal_value_2)
         print((value + self.cam_cal_value_2))
@@ -130,51 +137,29 @@ class Picarx(object):
         adc_value_list.append(self.S2.read())
         return adc_value_list
 
-    def set_power(self,speed):
-        self.set_motor_speed(1, speed)
-        self.set_motor_speed(2, speed) 
-
-    def backward(self,speed):
+    def forward(self, speed):
         current_angle = self.dir_current_angle
-        if current_angle != 0:
-            abs_current_angle = abs(current_angle)
-            # if abs_current_angle >= 0:
-            if abs_current_angle > 40:
-                abs_current_angle = 40
-            power_scale = (100 - abs_current_angle) / 100.0 
-            print("power_scale:",power_scale)
-            if (current_angle / abs_current_angle) > 0:
-                self.set_motor_speed(1, -1*speed)
-                self.set_motor_speed(2, speed * power_scale)
-            else:
-                self.set_motor_speed(1, -1*speed * power_scale)
-                self.set_motor_speed(2, speed )
+        abs_current_angle_cap = min(abs(current_angle), 40)
+        power_scale = (100 - abs_current_angle_cap) / 100.0
+        print('power_scale:', power_scale)
+        # TODO: test power distribution. also when angle changes
+        if current_angle >= 0:
+            motor0_scale = 1
+            motor1_scale = power_scale
         else:
-            self.set_motor_speed(1, -1*speed)
-            self.set_motor_speed(2, speed)  
+            motor0_scale = power_scale
+            motor1_scale = 1
 
-    def forward(self,speed):
-        current_angle = self.dir_current_angle
-        if current_angle != 0:
-            abs_current_angle = abs(current_angle)
-            # if abs_current_angle >= 0:
-            if abs_current_angle > 40:
-                abs_current_angle = 40
-            power_scale = (100 - abs_current_angle) / 100.0 
-            print("power_scale:",power_scale)
-            if (current_angle / abs_current_angle) > 0:
-                self.set_motor_speed(1, speed)
-                self.set_motor_speed(2, -1*speed * power_scale)
-            else:
-                self.set_motor_speed(1, speed * power_scale)
-                self.set_motor_speed(2, -1*speed )
-        else:
-            self.set_motor_speed(1, speed)
-            self.set_motor_speed(2, -1*speed)                  
+        self.set_motor_speed(0, speed * motor0_scale)
+        self.set_motor_speed(1, -speed * motor1_scale)
+
+        self.current_speed = speed
+
+    def backward(self, speed):
+        self.forward(-speed)
 
     def stop(self):
-        self.set_motor_speed(1, 0)
-        self.set_motor_speed(2, 0)
+        self.forward(0)
 
     
 
@@ -185,8 +170,8 @@ if __name__ == "__main__":
     px.stop()
     # set_dir_servo_angle(0)
     # time.sleep(1)
+    # self.set_motor_speed(0, 1)
     # self.set_motor_speed(1, 1)
-    # self.set_motor_speed(2, 1)
     # camera_servo_pin.angle(0)
 # set_camera_servo1_angle(cam_cal_value_1)
 # set_camera_servo2_angle(cam_cal_value_2)
