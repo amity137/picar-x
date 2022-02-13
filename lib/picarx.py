@@ -5,13 +5,21 @@ from pin import Pin
 from adc import ADC
 from configfile import ConfigFile
 import time
-
+import math
 
 
 class Picarx(object):
     PERIOD = 4095
     PRESCALER = 10
     TIMEOUT = 0.02
+
+    # Wheel base in cm
+    L = 9.4
+
+    # Track width of the rear axel in cm
+    B = 11.6
+
+    B_by_2L = B * 0.5 / L
 
     def __init__(self):
         self.dir_servo_pin = Servo(PWM('P2'))
@@ -33,7 +41,6 @@ class Picarx(object):
         self.left_rear_dir_pin = Pin("D4")
         self.right_rear_dir_pin = Pin("D5")
 
-
         self.S0 = ADC('A0')
         self.S1 = ADC('A1')
         self.S2 = ADC('A2')
@@ -46,6 +53,9 @@ class Picarx(object):
 
         self.dir_current_angle = 0
         self.current_speed = 0
+
+        # https://www.researchgate.net/publication/316133453_Wheel_Speed_Control_Algorithm_for_Rear_Wheel_Motor_Driven_Vehicle
+        self.use_wheel_speed_control = True
         
         #初始化PWM引脚
         for pin in self.motor_speed_pins:
@@ -59,8 +69,8 @@ class Picarx(object):
         direction = (1 if speed >= 0 else -1) * self.cali_dir_value[motor]
         speed = abs(speed)
         if speed != 0:
-            # TODO: should have max speed?
-            speed = int(speed / 2) + 40
+            speed = min(speed, 100)
+            speed = max(speed, 36)
         speed = speed - self.cali_speed_value[motor]
         if direction < 0:
             self.motor_direction_pins[motor].high()
@@ -143,20 +153,10 @@ class Picarx(object):
         return adc_value_list
 
     def forward(self, speed):
-        current_angle = self.dir_current_angle
-        abs_current_angle_cap = min(abs(current_angle), 40)
-        power_scale = (100 - abs_current_angle_cap) / 100.0
-        print('power_scale:', power_scale)
-        # TODO: try this? - https://www.researchgate.net/publication/316133453_Wheel_Speed_Control_Algorithm_for_Rear_Wheel_Motor_Driven_Vehicle
-        if current_angle >= 0:
-            motor0_scale = power_scale
-            motor1_scale = 1
-        else:
-            motor0_scale = 1
-            motor1_scale = power_scale
+        speed_scales = self.wheel_speed_control() if self.use_wheel_speed_control else self.wheel_speed_old()
 
-        self.set_motor_speed(0, speed * motor0_scale)
-        self.set_motor_speed(1, -speed * motor1_scale)
+        self.set_motor_speed(0, speed * speed_scales[0])
+        self.set_motor_speed(1, -speed * speed_scales[1])
 
         self.current_speed = speed
 
@@ -166,6 +166,23 @@ class Picarx(object):
     def stop(self):
         self.forward(0)
 
+    def wheel_speed_control(self):
+        angle_rad = self.dir_current_angle / 180.0 * math.pi
+        factor = self.B_by_2L * math.tan(angle_rad)
+        return 1 - factor, 1 + factor
+
+    def wheel_speed_old(self):
+        abs_current_angle_cap = min(abs(self.dir_current_angle), 40)
+        power_scale = (100 - abs_current_angle_cap) / 100.0
+        print('power_scale:', power_scale)
+        if self.dir_current_angle >= 0:
+            motor0_scale = power_scale
+            motor1_scale = 1
+        else:
+            motor0_scale = 1
+            motor1_scale = power_scale
+
+        return motor0_scale, motor1_scale
     
 
 if __name__ == "__main__":
