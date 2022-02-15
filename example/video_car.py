@@ -1,11 +1,7 @@
 # coding=utf-8
-import sys
-sys.path.append(r'/home/pi/git/picar-x/lib')
-
-from utils import reset_mcu
-reset_mcu()
-from picarx import Picarx
-from utils import run_command
+from setup import lib
+from lib.picarx import Picarx
+from lib.utils import run_command
 import datetime
 
 import cv2

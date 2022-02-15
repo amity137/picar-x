@@ -1,11 +1,8 @@
-import sys
-sys.path.append(r'/home/pi/git/picar-x/lib')
-from utils import reset_mcu
-reset_mcu()
+from setup import lib
 
-from picarx import Picarx
-from ultrasonic import Ultrasonic
-from pin import Pin
+from lib.picarx import Picarx
+from lib.ultrasonic import Ultrasonic
+from lib.pin import Pin
 
 if __name__ == "__main__":
     try:

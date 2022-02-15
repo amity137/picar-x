@@ -1,6 +1,6 @@
-import sys
-sys.path.append(r'/home/pi/git/picar-x/lib')
-from tts import TTS
+from setup import lib
+from lib.tts import TTS
+
 import time
 
 

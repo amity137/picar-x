@@ -1,4 +1,4 @@
-from adc import ADC
+from .adc import ADC
 
 class Grayscale_Module(object):
     def __init__(self,ref = 1000):

@@ -1,10 +1,6 @@
-import sys
-sys.path.append(r'/home/pi/git/picar-x/lib')
-from utils import reset_mcu
-reset_mcu()
-
-from pwm import PWM
-from servo import Servo
+from setup import lib
+from lib.pwm import PWM
+from lib.servo import Servo
 
 
 if __name__ == '__main__':

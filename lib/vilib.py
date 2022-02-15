@@ -15,7 +15,7 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 from PIL import Image, ImageDraw, ImageFont
 import threading
-from utils import run_command
+from .utils import run_command
 
 # face_recognizer = cv2.face.LBPHFaceRecognizer_create()
 # face_recognizer.read("/home/pi/face_recognizer.yml")

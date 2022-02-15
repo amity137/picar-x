@@ -1,9 +1,6 @@
-import sys
-sys.path.append(r'/home/pi/git/picar-x/lib')
-from utils import reset_mcu
-reset_mcu()
+from setup import lib
+from lib.picarx import Picarx
 
-from picarx import Picarx
 import time
 
 

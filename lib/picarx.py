@@ -1,9 +1,9 @@
 # from ezblock import Servo,PWM,fileDB,Pin,ADC
-from servo import Servo 
-from pwm import PWM
-from pin import Pin
-from adc import ADC
-from configfile import ConfigFile
+from .servo import Servo 
+from .pwm import PWM
+from .pin import Pin
+from .adc import ADC
+from .configfile import ConfigFile
 import time
 import math
 

@@ -1,12 +1,6 @@
-import sys
-sys.path.append(r'/home/pi/git/picar-x/lib')
-from utils import reset_mcu
-reset_mcu()
-from grayscale_module import Grayscale_Module
-from picarx import Picarx
-
-
-
+from setup import lib
+from lib.grayscale_module import Grayscale_Module
+from lib.picarx import Picarx
 
 
 if __name__=='__main__':
