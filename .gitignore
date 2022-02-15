@@ -2,3 +2,5 @@
 
 build/*
 /.vs
+
+example/camera_media/*

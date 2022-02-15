@@ -153,7 +153,7 @@ class Picarx(object):
         return adc_value_list
 
     def forward(self, speed):
-        speed_scales = self.wheel_speed_control() if self.use_wheel_speed_control else self.wheel_speed_old()
+        speed_scales = self._wheel_speed_control() if self.use_wheel_speed_control else self._wheel_speed_old()
 
         self.set_motor_speed(0, speed * speed_scales[0])
         self.set_motor_speed(1, -speed * speed_scales[1])
@@ -166,12 +166,18 @@ class Picarx(object):
     def stop(self):
         self.forward(0)
 
-    def wheel_speed_control(self):
+    def close(self):
+        self.stop()
+        self.set_dir_servo_angle(0)
+        self.set_camera_servo1_angle(0)
+        self.set_camera_servo2_angle(0)
+
+    def _wheel_speed_control(self):
         angle_rad = self.dir_current_angle / 180.0 * math.pi
         factor = self.B_by_2L * math.tan(angle_rad)
         return 1 - factor, 1 + factor
 
-    def wheel_speed_old(self):
+    def _wheel_speed_old(self):
         abs_current_angle_cap = min(abs(self.dir_current_angle), 40)
         power_scale = (100 - abs_current_angle_cap) / 100.0
         print('power_scale:', power_scale)
