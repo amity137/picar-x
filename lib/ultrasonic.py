@@ -1,10 +1,11 @@
 import time
+from .pin import Pin
 
 
 class Ultrasonic():
-    def __init__(self, trig, echo, timeout=0.02):
-        self.trig = trig
-        self.echo = echo
+    def __init__(self, timeout = 0.02):
+        self.trig = Pin("D2")
+        self.echo = Pin("D3")
         self.timeout = timeout
 
     def _read(self):

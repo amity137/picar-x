@@ -2,32 +2,14 @@ from setup import lib
 from lib.grayscale_module import Grayscale_Module
 from lib.picarx import Picarx
 
+import time
+
 
 if __name__=='__main__':
-  try:
-    gm = Grayscale_Module(500)
-    px = Picarx()
-    px_power = 10
+    gm = Grayscale_Module()
     while True:
-        gm_val_list = gm.get_grayscale_data()
-        print("gm_val_list:",gm_val_list)
-        gm_status = gm.get_line_status(gm_val_list)
-        print("gm_status:",gm_status)
+        print(gm.read())
+        time.sleep(1)
 
-        if gm_status == 'forward':
-            print(1)
-            px.forward(px_power) 
-
-        elif gm_status == 'left':
-            px.set_dir_servo_angle(12)
-            px.forward(px_power) 
-
-        elif gm_status == 'right':
-            px.set_dir_servo_angle(-12)
-            px.forward(px_power) 
-        else:
-            px.set_dir_servo_angle(0)
-            px.stop()
-  
-  finally:
-      px.stop()
+    px = Picarx()
+    

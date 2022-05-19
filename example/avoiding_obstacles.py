@@ -2,23 +2,19 @@ from setup import lib
 
 from lib.picarx import Picarx
 from lib.ultrasonic import Ultrasonic
-from lib.pin import Pin
 
 if __name__ == "__main__":
     try:
-        trig_pin = Pin("D2") 
-        echo_pin = Pin("D3")
-        sonar = Ultrasonic(trig_pin, echo_pin)
+        sonar = Ultrasonic()
         px = Picarx()
+
         px.forward(30)
         while True:
             distance = sonar.read()
             print("distance: ",distance)
-            if distance > 0 and distance < 300:
-                if distance < 25:
-                    px.set_dir_servo_angle(-35)
-                else:
-                    px.set_dir_servo_angle(0)
+            if distance > 0 and distance < 10:
+                px.forward(0)
+                break
     finally:
         px.forward(0)
 
